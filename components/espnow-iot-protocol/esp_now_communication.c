@@ -31,6 +31,8 @@ static void on_esp_now_data_receive(const esp_now_recv_info_t *esp_now_info,
 static void esp_now_send_task(void *params);
 static void esp_now_receive_task(void *params);
 
+extern void device_message_parse(const char *data);
+
 typedef struct {
   uint8_t mac_addr[ESP_NOW_ETH_ALEN];
   esp_now_send_status_t status;
