@@ -1,0 +1,14 @@
+targets:
+  - esp32
+  - esp32s2
+  - esp32c3
+
+sources:
+  - "esp_now_communication.c"
+  - "esp_now_pair.c"
+  - "link.c"
+
+include_dirs:
+  - "."
+
+dependencies:
