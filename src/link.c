@@ -129,6 +129,10 @@ char *link_get_pair_msg() {
 }
 
 bool link_send_status_msg() {
+  if(link_device->user_status_msg_cb() == NULL) {
+    return false;
+  }
+
   char *status = link_device->user_status_msg_cb();
 
   if (status == NULL) {
@@ -143,6 +147,10 @@ bool link_send_status_msg() {
 }
 
 bool link_send_data_msg() {
+  if(link_device->user_data_msg_cb() == NULL) {
+    return false;
+  }
+
   char *data = link_device->user_data_msg_cb();
 
   if (data == NULL) {

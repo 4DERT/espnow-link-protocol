@@ -221,7 +221,7 @@ bool enc_send_with_result(const char *data) {
   esp_now_send_status_t res;
   xQueueReceive(result, &res, portMAX_DELAY);
   ESP_LOGI(TAG, "data sent - status: %d", res);
-  if (ESP_NOW_SEND_SUCCESS)
+  if (res == ESP_NOW_SEND_SUCCESS)
     return true;
   return false;
 }
