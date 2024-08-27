@@ -1,10 +1,57 @@
-menu "ESPNOW IOT Protocol"
+menu "ESPNOW link configuration"
 
-   config DEVICE_ID
-        int "Device ID"
-        default 1
-        range 1 5
+    config LINK_CONFIG_SIZE
+        int "Link Config Size"
+        default 32
         help
-            Select device type
- 
+            Configure the buffer size for link configuration.
+
+   config LINK_STATUS_FMT_SIZE
+        int "Link Status Format Size"
+        default 32
+        help
+            Configure the buffer size for the link status format.
+
+   config LINK_DATA_FMT_SIZE
+        int "Link Data Format Size"
+        default 32
+        help
+            Configure the buffer size for the link data format.
+
+   config LINK_MAX_COMMANDS
+        int "Link Max Commands"
+        default 10
+        help
+            Configure the maximum number of commands supported by the link.
+
+   config LINK_COMMAND_MAX_SIZE
+        int "Link Command Max Size"
+        default 32
+        help
+            Configure the maximum size of commands supported by the link.
+
+   config ENC_CHANNEL
+        int "ESP-NOW Channel"
+        default 1
+        help
+            Configure the ESP-NOW communication channel.
+
+   config ENC_SEND_QUEUE_SIZE
+        int "ESP-NOW Send Queue Size"
+        default 5
+        help
+            Configure the size of the send queue for ESP-NOW messages.
+
+   config ENC_RECIEVE_QUEUE_SIZE
+        int "ESP-NOW Receive Queue Size"
+        default 5
+        help
+            Configure the size of the receive queue for ESP-NOW messages.
+
+   config ENC_RESULT_QUEUE_SIZE
+        int "ESP-NOW Result Queue Size"
+        default 2
+        help
+            Configure the size of the result queue for ESP-NOW operations.
+
 endmenu
