@@ -13,7 +13,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-#include "device_config.h"
+#include "link.h"
 #include "esp_now_communication.h"
 
 static const char *TAG = "enp";
@@ -32,14 +32,14 @@ static TaskHandle_t pair_task_handle;
 
 static inline void wait_random_time_and_send_status_and_data() {
   vTaskDelay(pdMS_TO_TICKS(esp_random() % 300));
-  device_send_status_msg();
-  device_send_data_msg();
+  link_send_status_msg();
+  link_send_data_msg();
 }
 
 void pair_task(void *params) {
   while (1) {
     ESP_LOGI(TAG, "Sending pair request");
-    enc_send_to_broadcast(device_get_pair_msg());
+    enc_send_to_broadcast(link_get_pair_msg());
 
     // wait some time for response
     int time = 4000 + (esp_random() % 2000);

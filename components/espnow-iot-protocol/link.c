@@ -1,4 +1,4 @@
-#include "device_config.h"
+#include "link.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -9,26 +9,26 @@
 #include "esp_now_communication.h"
 #include "esp_now_pair.h"
 
-device_config_t *device;
+link_config_t *link_device;
 
-static const char *TAG = "device_config";
+static const char *TAG = "link";
 
-void device_register(device_config_t *device_to_register) {
+void link_register(link_config_t *device_to_register) {
   if (device_to_register != NULL) {
-    device = device_to_register;
+    link_device = device_to_register;
   } else {
     ESP_LOGE(TAG, "Failed to register device");
   }
 }
 
-void device_message_parse(const char *data) {
-  for (int i = 0; i < DEVICE_MAX_COMMANDS; i++) {
-    if (strlen(device->commands[i]) == 0) {
+void link_message_parse(const char *data) {
+  for (int i = 0; i < LINK_MAX_COMMANDS; i++) {
+    if (strlen(link_device->commands[i]) == 0) {
       // Skip empty (uninitialized) commands
       continue;
     }
 
-    const char *command = device->commands[i];
+    const char *command = link_device->commands[i];
     char *wildcard_pos = strchr(command, '*');
 
     if (wildcard_pos != NULL) {
@@ -41,17 +41,17 @@ void device_message_parse(const char *data) {
             strstr(data + prefix_length, suffix) != NULL) {
           // If the prefix and suffix match, or if the suffix is empty, trigger
           // the callback
-          if (device->user_command_parser_cb != NULL) {
-            device->user_command_parser_cb(data);
+          if (link_device->user_command_parser_cb != NULL) {
+            link_device->user_command_parser_cb(data);
             return;
           }
         }
       }
     } else {
       // If no wildcard, check the entire command
-      if (strncmp(data, command, DEVICE_COMMAND_MAX_SIZE) == 0) {
-        if (device->user_command_parser_cb != NULL) {
-          device->user_command_parser_cb(data);
+      if (strncmp(data, command, LINK_COMMAND_MAX_SIZE) == 0) {
+        if (link_device->user_command_parser_cb != NULL) {
+          link_device->user_command_parser_cb(data);
           return;
         }
       }
@@ -59,9 +59,9 @@ void device_message_parse(const char *data) {
   }
 }
 
-char *device_generate_status_message(const char *status_fmt, ...) {
+char *link_generate_status_message(const char *status_fmt, ...) {
   if (status_fmt == NULL)
-    status_fmt = device->status_fmt;
+    status_fmt = link_device->status_fmt;
 
   va_list args;
   va_start(args, status_fmt);
@@ -87,9 +87,9 @@ char *device_generate_status_message(const char *status_fmt, ...) {
   return status_message;
 }
 
-char *device_generate_data_message(const char *data_fmt, ...) {
+char *link_generate_data_message(const char *data_fmt, ...) {
   if (data_fmt == NULL)
-    data_fmt = device->data_fmt;
+    data_fmt = link_device->data_fmt;
 
   va_list args;
   va_start(args, data_fmt);
@@ -115,21 +115,21 @@ char *device_generate_data_message(const char *data_fmt, ...) {
   return data_message;
 }
 
-char *device_get_pair_msg() {
-  if (device->_pair_msg != NULL) {
-    return device->_pair_msg;
+char *link_get_pair_msg() {
+  if (link_device->_pair_msg != NULL) {
+    return link_device->_pair_msg;
   }
 
-  if (strlen(device->config) == 0)
-    sprintf(device->config, "{}");
+  if (strlen(link_device->config) == 0)
+    sprintf(link_device->config, "{}");
 
-  asprintf(&device->_pair_msg, PAIR_MSG_FMT, device->type, device->config);
+  asprintf(&link_device->_pair_msg, PAIR_MSG_FMT, link_device->type, link_device->config);
 
-  return device->_pair_msg;
+  return link_device->_pair_msg;
 }
 
-bool device_send_status_msg() {
-  char *status = device->user_status_msg_cb();
+bool link_send_status_msg() {
+  char *status = link_device->user_status_msg_cb();
 
   if (status == NULL) {
     return false;
@@ -139,11 +139,11 @@ bool device_send_status_msg() {
 
   bool ret = enc_send_with_result(status);
   free(status);
-  return 1;
+  return ret;
 }
 
-bool device_send_data_msg() {
-  char *data = device->user_data_msg_cb();
+bool link_send_data_msg() {
+  char *data = link_device->user_data_msg_cb();
 
   if (data == NULL) {
     return false;
@@ -153,10 +153,10 @@ bool device_send_data_msg() {
 
   bool ret = enc_send_with_result(data);
   free(data);
-  return 1;
+  return ret;
 }
 
-void device_start(bool force_pair) {
+void link_start(bool force_pair) {
   enc_init();
   enp_init(force_pair);
 }

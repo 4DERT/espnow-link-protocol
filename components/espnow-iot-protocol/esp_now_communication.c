@@ -12,7 +12,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-#include "device_config.h"
+#include "link.h"
 #include "esp_now_pair.h"
 
 static const char *TAG = "ENC";
@@ -31,7 +31,7 @@ static void on_esp_now_data_receive(const esp_now_recv_info_t *esp_now_info,
 static void esp_now_send_task(void *params);
 static void esp_now_receive_task(void *params);
 
-extern void device_message_parse(const char *data);
+extern void link_message_parse(const char *data);
 
 typedef struct {
   uint8_t mac_addr[ESP_NOW_ETH_ALEN];
@@ -199,7 +199,7 @@ void esp_now_receive_task(void *params) {
       ESP_LOGI(TAG, "Receive broadcast ESPNOW data");
     } else {
       enp_check_received_pairing_acceptance(&data);
-      device_message_parse(data.data);
+      link_message_parse(data.data);
     }
   }
 }
