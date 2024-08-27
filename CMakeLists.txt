@@ -1,8 +1,13 @@
-# For more information about build system see
-# https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html
-# The following five lines of boilerplate have to be in your project's
-# CMakeLists in this exact order for cmake to work correctly
-cmake_minimum_required(VERSION 3.16)
+set(COMPONENT_ADD_INCLUDEDIRS
+    src
+    )
 
-include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(link)
+file(GLOB SRCS
+     src/*.c
+     )
+
+set(COMPONENT_SRCS ${SRCS})
+
+set(COMPONENT_REQUIRES "esp_netif" "esp_wifi" "nvs_flash")
+
+register_component()
