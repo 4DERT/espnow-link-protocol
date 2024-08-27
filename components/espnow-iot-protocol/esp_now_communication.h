@@ -15,14 +15,6 @@ typedef union {
 } enc_mac_t;
 
 typedef struct {
-  char data[ESP_NOW_MAX_DATA_LEN];
-  enc_mac_t dest_mac;
-
-  // private
-  QueueHandle_t* _ack_queue;
-} enc_send_t;
-
-typedef struct {
   esp_now_recv_info_t esp_now_info;
   char data[ESP_NOW_MAX_DATA_LEN];
   int data_len;
@@ -31,7 +23,8 @@ typedef struct {
 extern const enc_mac_t esp_now_broadcast_mac;
 
 void enc_init();
-bool enc_send_with_result(enc_send_t *data);
-void enc_send_no_result(enc_send_t *data);
+bool enc_send_with_result(const char *data);
+void enc_send_no_result(const char *data);
+void enc_send_to_broadcast(const char *data);
 
 #endif // ESP_NOW_COMMUNICATION_H_

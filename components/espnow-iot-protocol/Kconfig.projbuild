@@ -1,3 +1,10 @@
 menu "ESPNOW IOT Protocol"
-    
+
+   config DEVICE_ID
+        int "Device ID"
+        default 1
+        range 1 5
+        help
+            Select device type
+ 
 endmenu

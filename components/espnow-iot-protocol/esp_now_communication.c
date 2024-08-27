@@ -12,6 +12,9 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
+#include "device_config.h"
+#include "esp_now_pair.h"
+
 static const char *TAG = "ENC";
 
 #define ESPNOW_MAXDELAY 100
@@ -32,6 +35,14 @@ typedef struct {
   uint8_t mac_addr[ESP_NOW_ETH_ALEN];
   esp_now_send_status_t status;
 } enc_event_send_cb_t;
+
+typedef struct {
+  char data[ESP_NOW_MAX_DATA_LEN];
+  enc_mac_t dest_mac;
+
+  // private
+  QueueHandle_t *_ack_queue;
+} enc_send_t;
 
 static QueueHandle_t send_queue;
 static QueueHandle_t receive_queue;
@@ -127,18 +138,23 @@ void esp_now_send_task(void *params) {
     memset(&peer_info, 0, sizeof(esp_now_peer_info_t));
     peer_info.channel = ENC_CHANNEL;
     peer_info.encrypt = false;
-    memcpy(peer_info.peer_addr, data.dest_mac.bytes, 6);
+    memcpy(peer_info.peer_addr, data.dest_mac.bytes, ESP_NOW_ETH_ALEN);
     err = esp_now_add_peer(&peer_info);
     if (err != ESP_OK) {
-      ESP_LOGE(TAG, "Error while adding new peer!");
+      ESP_LOGE(TAG, "Error while adding new peer!- %s", esp_err_to_name(err));
+      esp_now_del_peer(peer_info.peer_addr);
       continue;
     }
 
     // send data
+    ESP_LOGI(TAG, "Sending data to " MACSTR ", message=%s",
+             MAC2STR(peer_info.peer_addr), data.data);
+
     err = esp_now_send(peer_info.peer_addr, (uint8_t *)&(data.data),
                        strlen(data.data));
     if (err != ESP_OK) {
-      ESP_LOGE(TAG, "Error while sending!");
+      ESP_LOGE(TAG, "Error while sending! - %s", esp_err_to_name(err));
+      esp_now_del_peer(peer_info.peer_addr);
       continue;
     }
 
@@ -151,6 +167,8 @@ void esp_now_send_task(void *params) {
       ESP_LOGI(TAG, "Sent data to " MACSTR ", with status %d (received)",
                MAC2STR(result.mac_addr), result.status);
     }
+
+    ESP_LOGI(TAG, "_ack_queue = %p", data._ack_queue);
 
     if (data._ack_queue != NULL)
       xQueueSend(*data._ack_queue, &result.status, 0);
@@ -177,14 +195,26 @@ void esp_now_receive_task(void *params) {
 
     if (IS_BROADCAST_ADDR(data.esp_now_info.src_addr)) {
       ESP_LOGI(TAG, "Receive broadcast ESPNOW data");
+    } else {
+      enp_check_received_pairing_acceptance(&data);
+      device_message_parse(data.data);
     }
   }
 }
 
-bool enc_send_with_result(enc_send_t *data) {
+bool enc_send_with_result(const char *data) {
+  enc_send_t send_data = {0};
+  strcpy(send_data.data, data);
+  // send_data.dest_mac = enp_get_gateway_mac();
+  bool is_paired = enp_get_gateway_mac(&send_data.dest_mac);
+  if(!is_paired) {
+    ESP_LOGW(TAG, "Device is not paired! Ommiting sending message");
+    return false;
+  }
+
   QueueHandle_t result = xQueueCreate(2, sizeof(esp_now_send_status_t));
-  data->_ack_queue = &result;
-  xQueueSend(send_queue, data, portMAX_DELAY);
+  send_data._ack_queue = &result;
+  xQueueSend(send_queue, &send_data, portMAX_DELAY);
 
   esp_now_send_status_t res;
   xQueueReceive(result, &res, portMAX_DELAY);
@@ -194,7 +224,25 @@ bool enc_send_with_result(enc_send_t *data) {
   return false;
 }
 
-void enc_send_no_result(enc_send_t *data) {
-  data->_ack_queue = NULL;
-  xQueueSend(send_queue, data, portMAX_DELAY);
+void enc_send_no_result(const char *data) {
+  enc_send_t send_data = {0};
+  memset(&send_data, 0, sizeof(enc_send_t));
+  strcpy(send_data.data, data);
+  // send_data.dest_mac = enp_get_gateway_mac();
+  bool is_paired = enp_get_gateway_mac(&send_data.dest_mac);
+  if(!is_paired) {
+    ESP_LOGW(TAG, "Device is not paired! Ommiting sending message");
+    return;
+  }
+  send_data._ack_queue = NULL;
+  xQueueSend(send_queue, &send_data, portMAX_DELAY);
+}
+
+void enc_send_to_broadcast(const char *data) {
+  enc_send_t send_data = {0};
+  strcpy(send_data.data, data);
+  memcpy(send_data.dest_mac.bytes, esp_now_broadcast_mac.bytes,
+         ESP_NOW_ETH_ALEN);
+  send_data._ack_queue = NULL;
+  xQueueSend(send_queue, &send_data, portMAX_DELAY);
 }
