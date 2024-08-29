@@ -15,7 +15,7 @@
 #include "esp_now_pair.h"
 #include "link.h"
 
-static const char *TAG = "ENC";
+static const char *TAG = "Link_ENC";
 
 #define ESPNOW_MAXDELAY 100
 
@@ -123,7 +123,6 @@ static void on_esp_now_data_receive(const esp_now_recv_info_t *esp_now_info,
 }
 
 void esp_now_send_task(void *params) {
-  static const char *TAG = "espnow_send_task";
   BaseType_t queue_status;
   enc_send_t data;
   esp_now_peer_info_t peer_info;

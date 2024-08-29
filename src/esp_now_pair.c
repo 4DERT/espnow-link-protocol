@@ -16,7 +16,7 @@
 #include "link.h"
 #include "esp_now_communication.h"
 
-static const char *TAG = "enp";
+static const char *TAG = "Link_ENP";
 
 #define NVS_MAC_KEY "gw_mac"
 #define NVS_NAME "PAIR"

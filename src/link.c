@@ -11,7 +11,7 @@
 
 link_config_t *link_device;
 
-static const char *TAG = "link";
+static const char *TAG = "Link";
 
 void link_register(link_config_t *device_to_register) {
   if (device_to_register != NULL) {
