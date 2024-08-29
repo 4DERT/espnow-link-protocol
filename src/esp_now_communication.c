@@ -191,7 +191,6 @@ bool check_mac(uint8_t *mac) {
 }
 
 void esp_now_receive_task(void *params) {
-  static const char *TAG = "espnow_receive_task";
   BaseType_t queue_status;
   enc_event_receive_cb_t data;
 
@@ -202,20 +201,21 @@ void esp_now_receive_task(void *params) {
       continue;
 
     // Parsing data
-    ESP_LOGI(TAG, "Recieved message \"%s\" from " MACSTR, data.data,
-             MAC2STR(data.esp_now_info.src_addr));
+    ESP_LOGI(TAG, "Recieved message \"%s\" from " MACSTR " RSSI: %d", data.data,
+             MAC2STR(data.esp_now_info.src_addr),
+             data.esp_now_info.rx_ctrl->rssi);
 
     if (IS_BROADCAST_ADDR(data.esp_now_info.src_addr)) {
       ESP_LOGI(TAG, "Receive broadcast ESPNOW data");
     } else {
       enp_check_received_pairing_acceptance(&data);
-      
+
       if (check_mac(data.esp_now_info.src_addr)) {
         link_message_parse(data.data);
       } else {
-        ESP_LOGW(TAG, "The received message does not come from a paired device");
+        ESP_LOGW(TAG,
+                 "The received message does not come from a paired device");
       }
-      
     }
   }
 }
