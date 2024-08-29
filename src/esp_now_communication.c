@@ -210,8 +210,12 @@ void esp_now_receive_task(void *params) {
     } else {
       enp_check_received_pairing_acceptance(&data);
       
-      if (check_mac(data.esp_now_info.src_addr))
+      if (check_mac(data.esp_now_info.src_addr)) {
         link_message_parse(data.data);
+      } else {
+        ESP_LOGW(TAG, "The received message does not come from a paired device");
+      }
+      
     }
   }
 }
