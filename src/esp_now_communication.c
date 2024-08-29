@@ -12,8 +12,8 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-#include "link.h"
 #include "esp_now_pair.h"
+#include "link.h"
 
 static const char *TAG = "ENC";
 
@@ -180,6 +180,17 @@ void esp_now_send_task(void *params) {
   }
 }
 
+bool check_mac(uint8_t *mac) {
+  enc_mac_t gateway_mac;
+  bool is_paired = enp_get_gateway_mac(&gateway_mac);
+  if (!is_paired)
+    return false;
+
+  bool is_gateway_mac = (memcmp(gateway_mac.bytes, mac, ESP_NOW_ETH_ALEN) == 0);
+
+  return (is_paired && is_gateway_mac);
+}
+
 void esp_now_receive_task(void *params) {
   static const char *TAG = "espnow_receive_task";
   BaseType_t queue_status;
@@ -199,7 +210,9 @@ void esp_now_receive_task(void *params) {
       ESP_LOGI(TAG, "Receive broadcast ESPNOW data");
     } else {
       enp_check_received_pairing_acceptance(&data);
-      link_message_parse(data.data);
+      
+      if (check_mac(data.esp_now_info.src_addr))
+        link_message_parse(data.data);
     }
   }
 }
@@ -209,7 +222,7 @@ bool enc_send_with_result(const char *data) {
   strcpy(send_data.data, data);
   // send_data.dest_mac = enp_get_gateway_mac();
   bool is_paired = enp_get_gateway_mac(&send_data.dest_mac);
-  if(!is_paired) {
+  if (!is_paired) {
     ESP_LOGW(TAG, "Device is not paired! Ommiting sending message");
     return false;
   }
@@ -232,7 +245,7 @@ void enc_send_no_result(const char *data) {
   strcpy(send_data.data, data);
   // send_data.dest_mac = enp_get_gateway_mac();
   bool is_paired = enp_get_gateway_mac(&send_data.dest_mac);
-  if(!is_paired) {
+  if (!is_paired) {
     ESP_LOGW(TAG, "Device is not paired! Ommiting sending message");
     return;
   }
