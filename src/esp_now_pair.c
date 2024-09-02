@@ -76,13 +76,13 @@ void enp_init(bool force_pair) {
   nvs_open(NVS_NAME, NVS_READWRITE, &nvs);
 
   if (force_pair) {
-    ESP_LOGI(TAG, "force_pair");
+    ESP_LOGI(TAG, "Force pairing initiated, resetting stored gateway MAC");
     nvs_set_u64(nvs, NVS_MAC_KEY, 0ULL);
     nvs_commit(nvs);
   } else {
     nvs_get_u64(nvs, NVS_MAC_KEY, &gateway.value);
 
-    ESP_LOGI(TAG, "Got gateway MAC from NVS - " MACSTR, MAC2STR(gateway.bytes));
+    ESP_LOGI(TAG, "Retrieved gateway MAC from NVS: " MACSTR, MAC2STR(gateway.bytes));
     xSemaphoreTake(xMutex, portMAX_DELAY);
     is_pairing = false;
     is_paired = true;

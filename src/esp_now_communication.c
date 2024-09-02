@@ -72,7 +72,7 @@ void enc_init() {
   // Print MAC
   uint8_t mac[ESP_NOW_ETH_ALEN];
   esp_wifi_get_mac(ESP_IF_WIFI_STA, mac);
-  ESP_LOGI(TAG, "ESPNOW MAC: " MACSTR, MAC2STR(mac));
+  ESP_LOGI(TAG, "Device WiFi (ESP-NOW) MAC: " MACSTR, MAC2STR(mac));
 
   // init queue
   send_queue = xQueueCreate(ENC_SEND_QUEUE_SIZE, sizeof(enc_send_t));
@@ -83,7 +83,7 @@ void enc_init() {
 
   // esp now init
   if (esp_now_init() != ESP_OK) {
-    ESP_LOGE(TAG, "esp_now_init ERROR");
+    ESP_LOGE(TAG, "ESP-NOW initialization failed");
   }
 
   // register esp now callbacks
@@ -102,7 +102,7 @@ static void on_esp_now_data_send(const uint8_t *mac_addr,
   send_cb.status = status;
 
   if (xQueueSend(send_result_queue, &send_cb, ESPNOW_MAXDELAY) != pdTRUE) {
-    ESP_LOGW(TAG, "Send send queue fail");
+    ESP_LOGW(TAG, "Send queue fail");
   }
 }
 
@@ -169,7 +169,7 @@ void esp_now_send_task(void *params) {
     }
 
     // send data
-    ESP_LOGI(TAG, "Sending data to " MACSTR ", message=%s",
+    ESP_LOGD(TAG, "Sending data to " MACSTR ", message=%s",
              MAC2STR(peer_info.peer_addr), data.data);
 
     err = esp_now_send(peer_info.peer_addr, (uint8_t *)&(data.data),
@@ -183,10 +183,10 @@ void esp_now_send_task(void *params) {
     // wait for the data to be sent
     queue_status = xQueueReceive(send_result_queue, &result, portMAX_DELAY);
     if (result.status == ESP_NOW_SEND_FAIL) {
-      ESP_LOGW(TAG, "Sent data to " MACSTR ", with status %d (not received)",
+      ESP_LOGD(TAG, "Sent data to " MACSTR ", with status %d (not received)",
                MAC2STR(result.mac_addr), result.status);
     } else {
-      ESP_LOGI(TAG, "Sent data to " MACSTR ", with status %d (received)",
+      ESP_LOGD(TAG, "Sent data to " MACSTR ", with status %d (received)",
                MAC2STR(result.mac_addr), result.status);
     }
 
@@ -221,16 +221,16 @@ void esp_now_receive_task(void *params) {
 
       // Parsing data
 #ifndef CONFIG_IDF_TARGET_ESP8266
-    ESP_LOGI(TAG, "Recieved message \"%s\" from " MACSTR " RSSI: %d", data.data,
+    ESP_LOGD(TAG, "Recieved message \"%s\" from " MACSTR " RSSI: %d", data.data,
              MAC2STR(data.esp_now_info.src_addr),
              data.esp_now_info.rx_ctrl->rssi);
 #else
-    ESP_LOGI(TAG, "Recieved message \"%s\" from " MACSTR, data.data,
+    ESP_LOGD(TAG, "Recieved message \"%s\" from " MACSTR, data.data,
              MAC2STR(data.esp_now_info.src_addr));
 #endif
 
     if (IS_BROADCAST_ADDR(data.esp_now_info.src_addr)) {
-      ESP_LOGI(TAG, "Receive broadcast ESPNOW data");
+      ESP_LOGD(TAG, "Received broadcast ESPNOW data");
     } else {
       enp_check_received_pairing_acceptance(&data);
 
@@ -239,7 +239,7 @@ void esp_now_receive_task(void *params) {
       } else {
         if (enp_get_gateway_mac(NULL)) {
           ESP_LOGW(TAG,
-                   "The received message does not come from a paired device");
+                   "Received message from an unknown or unpaired device");
         }
       }
     }

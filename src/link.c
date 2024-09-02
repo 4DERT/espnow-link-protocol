@@ -139,7 +139,7 @@ bool link_send_status_msg() {
     return false;
   }
 
-  ESP_LOGI(TAG, "Sending status message: \"%s\"", status);
+  ESP_LOGD(TAG, "Sending status message: \"%s\"", status);
 
   bool ret = enc_send_with_result(status);
   free(status);
@@ -157,7 +157,7 @@ bool link_send_data_msg() {
     return false;
   }
 
-  ESP_LOGI(TAG, "Sending data message: \"%s\"", data);
+  ESP_LOGD(TAG, "Sending data message: \"%s\"", data);
 
   bool ret = enc_send_with_result(data);
   free(data);
