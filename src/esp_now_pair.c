@@ -16,8 +16,8 @@
 #include "esp_random.h"
 #endif
 
-#include "link.h"
 #include "esp_now_communication.h"
+#include "link.h"
 
 static const char *TAG = "Link_ENP";
 
@@ -82,14 +82,11 @@ void enp_init(bool force_pair) {
   } else {
     nvs_get_u64(nvs, NVS_MAC_KEY, &gateway.value);
 
-    if (gateway.value) {
-      ESP_LOGI(TAG, "Got gateway MAC from NVS - " MACSTR,
-               MAC2STR(gateway.bytes));
-      xSemaphoreTake(xMutex, portMAX_DELAY);
-      is_pairing = false;
-      is_paired = true;
-      xSemaphoreGive(xMutex);
-    }
+    ESP_LOGI(TAG, "Got gateway MAC from NVS - " MACSTR, MAC2STR(gateway.bytes));
+    xSemaphoreTake(xMutex, portMAX_DELAY);
+    is_pairing = false;
+    is_paired = true;
+    xSemaphoreGive(xMutex);
   }
 
   xSemaphoreTake(xMutex, portMAX_DELAY);
@@ -102,8 +99,6 @@ void enp_init(bool force_pair) {
   } else {
     wait_random_time_and_send_status_and_data();
   }
-
-  // parowanie
 }
 
 bool enp_get_gateway_mac(enc_mac_t *gateway_mac_out) {

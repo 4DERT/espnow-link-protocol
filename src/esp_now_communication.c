@@ -110,8 +110,8 @@ static void on_esp_now_data_send(const uint8_t *mac_addr,
  * @brief Callback function of receiving ESPNOW data.
  */
 #ifdef CONFIG_IDF_TARGET_ESP8266
-static void on_esp_now_data_receive(const uint8_t *mac,
-                                    const uint8_t *data, int data_len)
+static void on_esp_now_data_receive(const uint8_t *mac, const uint8_t *data,
+                                    int data_len)
 #else
 static void on_esp_now_data_receive(const esp_now_recv_info_t *esp_now_info,
                                     const uint8_t *data, int data_len)
@@ -190,8 +190,6 @@ void esp_now_send_task(void *params) {
                MAC2STR(result.mac_addr), result.status);
     }
 
-    ESP_LOGI(TAG, "_ack_queue = %p", data._ack_queue);
-
     if (data._ack_queue != NULL)
       xQueueSend(*data._ack_queue, &result.status, 0);
 
@@ -239,8 +237,10 @@ void esp_now_receive_task(void *params) {
       if (check_mac(data.esp_now_info.src_addr)) {
         link_message_parse(data.data);
       } else {
-        ESP_LOGW(TAG,
-                 "The received message does not come from a paired device");
+        if (enp_get_gateway_mac(NULL)) {
+          ESP_LOGW(TAG,
+                   "The received message does not come from a paired device");
+        }
       }
     }
   }
@@ -262,7 +262,6 @@ bool enc_send_with_result(const char *data) {
 
   esp_now_send_status_t res;
   xQueueReceive(result, &res, portMAX_DELAY);
-  ESP_LOGI(TAG, "data sent - status: %d", res);
   if (res == ESP_NOW_SEND_SUCCESS)
     return true;
   return false;
