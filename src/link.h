@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "sdkconfig.h"
+
 #define PAIR_MSG_FMT "SHPR:{\"type\":%d,\"cfg\":%s}"
 #define PAIR_ACCEPT "SHPR:PAIRED"
 

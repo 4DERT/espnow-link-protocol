@@ -4,13 +4,16 @@
 
 #include "esp_event.h"
 #include "esp_log.h"
-#include "esp_mac.h"
 #include "esp_netif.h"
 #include "esp_now.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+
+#ifndef CONFIG_IDF_TARGET_ESP8266
+#include "esp_mac.h"
+#endif
 
 #include "esp_now_pair.h"
 #include "link.h"
@@ -26,8 +29,13 @@ const enc_mac_t esp_now_broadcast_mac = {
 
 static void on_esp_now_data_send(const uint8_t *mac_addr,
                                  esp_now_send_status_t status);
+#ifdef CONFIG_IDF_TARGET_ESP8266
+static void on_esp_now_data_receive(const uint8_t *mac_addr,
+                                    const uint8_t *data, int data_len);
+#else
 static void on_esp_now_data_receive(const esp_now_recv_info_t *esp_now_info,
                                     const uint8_t *data, int data_len);
+#endif
 static void esp_now_send_task(void *params);
 static void esp_now_receive_task(void *params);
 
@@ -101,8 +109,21 @@ static void on_esp_now_data_send(const uint8_t *mac_addr,
 /**
  * @brief Callback function of receiving ESPNOW data.
  */
+#ifdef CONFIG_IDF_TARGET_ESP8266
+static void on_esp_now_data_receive(const uint8_t *mac,
+                                    const uint8_t *data, int data_len)
+#else
 static void on_esp_now_data_receive(const esp_now_recv_info_t *esp_now_info,
-                                    const uint8_t *data, int data_len) {
+                                    const uint8_t *data, int data_len)
+#endif
+{
+#ifdef CONFIG_IDF_TARGET_ESP8266
+  esp_now_recv_info_t _esp_now_info = {0};
+  memcpy(_esp_now_info.src_addr, mac, ESP_NOW_ETH_ALEN);
+  memcpy(_esp_now_info.des_addr, mac, ESP_NOW_ETH_ALEN);
+  esp_now_recv_info_t *esp_now_info = &_esp_now_info;
+#endif
+
   uint8_t *mac_addr = esp_now_info->src_addr;
   // uint8_t *des_addr = esp_now_info->des_addr;
 
@@ -200,10 +221,15 @@ void esp_now_receive_task(void *params) {
     if (queue_status != pdPASS)
       continue;
 
-    // Parsing data
+      // Parsing data
+#ifndef CONFIG_IDF_TARGET_ESP8266
     ESP_LOGI(TAG, "Recieved message \"%s\" from " MACSTR " RSSI: %d", data.data,
              MAC2STR(data.esp_now_info.src_addr),
              data.esp_now_info.rx_ctrl->rssi);
+#else
+    ESP_LOGI(TAG, "Recieved message \"%s\" from " MACSTR, data.data,
+             MAC2STR(data.esp_now_info.src_addr));
+#endif
 
     if (IS_BROADCAST_ADDR(data.esp_now_info.src_addr)) {
       ESP_LOGI(TAG, "Receive broadcast ESPNOW data");

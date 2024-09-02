@@ -4,14 +4,17 @@
 
 #include "esp_event.h"
 #include "esp_log.h"
-#include "esp_mac.h"
 #include "esp_netif.h"
 #include "esp_now.h"
-#include "esp_random.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+
+#ifndef CONFIG_IDF_TARGET_ESP8266
+#include "esp_mac.h"
+#include "esp_random.h"
+#endif
 
 #include "link.h"
 #include "esp_now_communication.h"

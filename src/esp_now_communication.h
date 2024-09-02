@@ -9,6 +9,15 @@
 #define ENC_RECIEVE_QUEUE_SIZE CONFIG_ENC_RECIEVE_QUEUE_SIZE
 #define ENC_RESULT_QUEUE_SIZE CONFIG_ENC_RESULT_QUEUE_SIZE
 
+#ifdef CONFIG_IDF_TARGET_ESP8266
+typedef struct {
+  uint8_t src_addr[ESP_NOW_ETH_ALEN]; /**< Source address of ESPNOW packet */
+  uint8_t
+      des_addr[ESP_NOW_ETH_ALEN]; /**< Destination address of ESPNOW packet */
+
+} esp_now_recv_info_t;
+#endif
+
 typedef union {
   uint8_t bytes[6];
   uint64_t value;
