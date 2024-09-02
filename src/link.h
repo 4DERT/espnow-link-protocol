@@ -17,6 +17,10 @@
 #define LINK_MAX_COMMANDS CONFIG_LINK_MAX_COMMANDS
 #define LINK_COMMAND_MAX_SIZE CONFIG_LINK_COMMAND_MAX_SIZE
 
+#define LINK_USE_PREFIX CONFIG_LINK_USE_PREFIX
+#define LINK_STATUS_PREFIX "!S:"
+#define LINK_DATA_PREFIX "!D:"
+
 /**
  * @brief Callback type for handling received commands.
  *

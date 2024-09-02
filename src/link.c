@@ -13,6 +13,8 @@ link_config_t *link_device;
 
 static const char *TAG = "Link";
 
+typedef enum { LINK_MESSAGE_DATA, LINK_MESSAGE_STATUS } link_message_type_e;
+
 void link_register(link_config_t *device_to_register) {
   if (device_to_register != NULL) {
     link_device = device_to_register;
@@ -123,45 +125,59 @@ char *link_get_pair_msg() {
   if (strlen(link_device->config) == 0)
     sprintf(link_device->config, "{}");
 
-  asprintf(&link_device->_pair_msg, PAIR_MSG_FMT, link_device->type, link_device->config);
+  asprintf(&link_device->_pair_msg, PAIR_MSG_FMT, link_device->type,
+           link_device->config);
 
   return link_device->_pair_msg;
 }
 
-bool link_send_status_msg() {
-  if(link_device->user_status_msg_cb == NULL) {
+static inline bool link_send_msg(char *(*msg_cb)(),
+                                 link_message_type_e msg_type) {
+  if (msg_cb == NULL) {
     return false;
   }
 
-  char *status = link_device->user_status_msg_cb();
+  char *msg = msg_cb();
 
-  if (status == NULL) {
+  if (msg == NULL) {
     return false;
   }
 
-  ESP_LOGD(TAG, "Sending status message: \"%s\"", status);
+#if CONFIG_LINK_USE_PREFIX
+  size_t prefix_len = (msg_type == LINK_MESSAGE_STATUS)
+                          ? strlen(LINK_STATUS_PREFIX)
+                          : strlen(LINK_DATA_PREFIX);
 
-  bool ret = enc_send_with_result(status);
-  free(status);
+  size_t msg_len = strlen(msg);
+  char *prefixed_msg = (char *)malloc(prefix_len + msg_len + 1);
+
+  if (prefixed_msg == NULL) {
+    free(msg);
+    return false;
+  }
+
+  strcpy(prefixed_msg, (msg_type == LINK_MESSAGE_STATUS) ? LINK_STATUS_PREFIX
+                                                         : LINK_DATA_PREFIX);
+  strcat(prefixed_msg, msg);
+
+  free(msg);
+  msg = prefixed_msg;
+#endif
+
+  ESP_LOGD(TAG, "Sending %s message: \"%s\"",
+           (msg_type == LINK_MESSAGE_STATUS) ? "status" : "data", msg);
+
+  bool ret = enc_send_with_result(msg);
+  free(msg);
   return ret;
 }
 
+bool link_send_status_msg() {
+  return link_send_msg(link_device->user_status_msg_cb, LINK_MESSAGE_STATUS);
+}
+
 bool link_send_data_msg() {
-  if(link_device->user_data_msg_cb == NULL) {
-    return false;
-  }
-
-  char *data = link_device->user_data_msg_cb();
-
-  if (data == NULL) {
-    return false;
-  }
-
-  ESP_LOGD(TAG, "Sending data message: \"%s\"", data);
-
-  bool ret = enc_send_with_result(data);
-  free(data);
-  return ret;
+  return link_send_msg(link_device->user_data_msg_cb, LINK_MESSAGE_DATA);
 }
 
 void link_start(bool force_pair) {
