@@ -1,6 +1,5 @@
 .directory
 .vscode/*
-!.vscode/c_cpp_properties.json
 build/
 sdkconfig
 sdkconfig.old
