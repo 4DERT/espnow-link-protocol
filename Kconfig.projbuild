@@ -31,13 +31,19 @@ menu "ESPNOW link configuration"
             Configure the maximum size of commands supported by the link.
 
     config LINK_USE_PREFIX
-    bool "Enable message prefix"
-    default y
-    help
-        Select "Yes" if you want to add a prefix to the status and date messages.
-        When enabled, the prefix "!S:" will be added to status messages and "!D:"
-        will be added to date messages.
+        bool "Enable message prefix"
+        default y
+        help
+            Select "Yes" if you want to add a prefix to the status and date messages.
+            When enabled, the prefix "!S:" will be added to status messages and "!D:"
+            will be added to date messages.
 
+    config LINK_SEND_STATUS_DATE_AFTER_INIT
+        bool "Automatically send status and date after link_start and pairing"
+        default y
+        help
+            Select "Yes" to automatically send the current status and date after link_start and pairing.
+            If this option is not selected, the status and date will not be sent automatically.
 
    config ENC_CHANNEL
         int "ESP-NOW Channel"

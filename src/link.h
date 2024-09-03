@@ -21,6 +21,8 @@
 #define LINK_STATUS_PREFIX "!S:"
 #define LINK_DATA_PREFIX "!D:"
 
+#define LINK_SEND_STATUS_DATE_AFTER_INIT CONFIG_LINK_SEND_STATUS_DATE_AFTER_INIT
+
 /**
  * @brief Callback type for handling received commands.
  *

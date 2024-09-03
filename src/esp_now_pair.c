@@ -34,9 +34,11 @@ static nvs_handle_t nvs;
 static TaskHandle_t pair_task_handle;
 
 static inline void wait_random_time_and_send_status_and_data() {
+#if LINK_SEND_STATUS_DATE_AFTER_INIT
   vTaskDelay(pdMS_TO_TICKS(esp_random() % 300));
   link_send_status_msg();
   link_send_data_msg();
+#endif
 }
 
 void pair_task(void *params) {
@@ -82,7 +84,8 @@ void enp_init(bool force_pair) {
   } else {
     nvs_get_u64(nvs, NVS_MAC_KEY, &gateway.value);
 
-    ESP_LOGI(TAG, "Retrieved gateway MAC from NVS: " MACSTR, MAC2STR(gateway.bytes));
+    ESP_LOGI(TAG, "Retrieved gateway MAC from NVS: " MACSTR,
+             MAC2STR(gateway.bytes));
     xSemaphoreTake(xMutex, portMAX_DELAY);
     is_pairing = false;
     is_paired = true;
