@@ -184,3 +184,7 @@ void link_start(bool force_pair) {
   enc_init();
   enp_init(force_pair);
 }
+
+void link_block_until_find_pair() {
+  enp_block_until_find_pair();
+}

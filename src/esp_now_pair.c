@@ -110,13 +110,19 @@ bool enp_get_gateway_mac(enc_mac_t *gateway_mac_out) {
   xSemaphoreGive(xMutex);
 
   if (_is_paired) {
-    *gateway_mac_out = gateway;
+    if (gateway_mac_out != NULL) {
+      *gateway_mac_out = gateway;
+    }
     return true;
   }
   return false;
 }
 
-void enp_block_until_find_pair() {}
+void enp_block_until_find_pair() { 
+  while (!enp_get_gateway_mac(NULL)) {
+    vTaskDelay(10);
+  } 
+}
 
 void enp_check_received_pairing_acceptance(enc_event_receive_cb_t *data) {
   xSemaphoreTake(xMutex, portMAX_DELAY);

@@ -162,4 +162,12 @@ bool link_send_data_msg();
  */
 char *link_get_pair_msg();
 
+/**
+ * @brief Blocks execution until a pairing is found.
+ *
+ * This function continuously checks for the presence of a gateway MAC address 
+ * and only returns once a pairing is established.
+ */
+void link_block_until_find_pair();
+
 #endif // LINK_CONFIG_H_
